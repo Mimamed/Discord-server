@@ -1,6 +1,8 @@
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ClientListener implements Runnable
 {
@@ -8,27 +10,40 @@ public class ClientListener implements Runnable
     static Socket client;
     static InputStream input;
     static OutputStream output;
+    static List<String> chatlog = new ArrayList<String>();
+    static boolean read = false;
 
     public void run()
-        {
+    {
         try
         {
-        listen();
+            listen();
         }
         catch (Exception e)
         {
-        e.printStackTrace();
+            e.printStackTrace();
         }
-        }
+    }
 
-private static void listen() throws Exception
-        {
+    private static void listen() throws Exception
+    {
         client = MainClass.server.accept();
         System.out.println("Connectad!!!");
         input = client.getInputStream();
         output = client.getOutputStream();
-        input.read(buffer);
-        System.out.println(new String(buffer));
+        read();
         MainClass.clients.add(client);
+    }
+
+    private static void read() throws Exception
+    {
+        read = true;
+
+        while (read)
+        {
+            input.read(buffer);
+            System.out.println(new String(buffer));
+            buffer = new byte[1000];
         }
-        }
+    }
+}
