@@ -6,7 +6,7 @@ import java.util.List;
 public class MainClass
 {
 
-    static int port = 7777;
+    static int port = 7777, serverSize = 100;
     static ServerSocket server;
     static List<Socket> clients = new ArrayList<Socket>();
     static List<Thread> connections = new ArrayList<Thread>();
@@ -28,7 +28,14 @@ public class MainClass
     private static void setupServer() throws Exception
     {
         server = new ServerSocket(port);
-        connections.add(new Thread(new ClientListener()));
+        connections.add(new Thread(new ClientListener(0)));
         connections.get(0).start();
+    }
+
+    public static void newClient()
+    {
+        connections.add(new Thread(new ClientListener(connections.size())));
+        connections.get(connections.size() - 1).start();
+
     }
 }
