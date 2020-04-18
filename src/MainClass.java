@@ -10,7 +10,7 @@ public class MainClass
     static ServerSocket server;
     static List<Socket> clients = new ArrayList<Socket>();
     static List<Thread> connections = new ArrayList<Thread>();
-    static List<User> users = new ArrayList<User>();
+    static List<ClientListener> users = new ArrayList<ClientListener>();
 
     public static void main(String[] args)
     {
@@ -28,14 +28,44 @@ public class MainClass
     private static void setupServer() throws Exception
     {
         server = new ServerSocket(port);
-        connections.add(new Thread(new ClientListener(0)));
+        users.add(new ClientListener(users.size()));
+        connections.add(new Thread(users.get(0)));
         connections.get(0).start();
     }
 
     public static void newClient()
     {
-        connections.add(new Thread(new ClientListener(connections.size())));
-        connections.get(connections.size() - 1).start();
+        if (users.size() < serverSize)
+        {
+            users.add(new ClientListener(users.size()));
+            connections.add(new Thread(users.get(users.size() - 1)));
+            connections.get(connections.size() - 1).start();
+        }
+    }
+
+    public static void sombodyDisconected(int clientCount)
+    {
+        for(int i = 0; i < users.get(clientCount).chatlog.size(); i++)
+        {
+            System.out.println("-----: " + users.get(clientCount).chatlog.get(i).getMessage());
+        }
+
+        users.get(clientCount).read = false;
+        try
+        {
+            users.get(clientCount).client.close();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        users.remove(clientCount);
+        connections.remove(clientCount);
+
+        for(int i = clientCount; i < users.size(); i++)
+        {
+            users.get(i).clientCount--;
+        }
 
     }
 }

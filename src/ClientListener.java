@@ -10,7 +10,8 @@ public class ClientListener implements Runnable
     static Socket client;
     static InputStream input;
     static OutputStream output;
-    static List<String> chatlog = new ArrayList<String>();
+    static List<Chatlog> chatlog = new ArrayList<Chatlog>();
+    static List<String> sentMessages = new ArrayList<String>(), receivedMessages = new ArrayList<String>();
     static boolean read = false;
     static int clientCount;
 
@@ -27,11 +28,8 @@ public class ClientListener implements Runnable
         {
             client = MainClass.server.accept();
 
-            System.out.println("Connectad!!! - ");
-            if (clientCount + 1 <= MainClass.serverSize)
-            {
-                MainClass.newClient();
-            }
+            System.out.println("Connectad!!! - " + client.isBound() + client.isConnected() + client.getInputStream().read());
+            MainClass.newClient();
             clientSetup();
         }
         catch (Exception e)
@@ -44,8 +42,10 @@ public class ClientListener implements Runnable
     {
         input = client.getInputStream();
         output = client.getOutputStream();
-        MainClass.users.add(new User(client));
-        MainClass.users.get(clientCount).receiveMessage("noobie");
+
+        buffer = ("{6969420-" + MainClass.users.size() + ":" + User.clientCount + ";6969420}").getBytes(); // fixar lite mer senare atag klienten nu vet hur många är online
+        output.write(buffer);
+        buffer = new byte[1000];
         read();
     }
 
@@ -55,17 +55,26 @@ public class ClientListener implements Runnable
 
         while (read)
         {
-            if (!client.isConnected())
+            if (input.read(buffer) == -1)
             {
+                System.out.println("Disconnected");
                 read = false;
+                client.close();
+                MainClass.sombodyDisconected(clientCount);
                 break;
             }
+            else if (false) //är till för att stoppa in funktioner som clienten kan skicka
+            {
 
-            input.read(buffer);
-            String message = new String(buffer);
-            MainClass.users.get(clientCount).receiveMessage(message.substring(0, 10));
-            System.out.println(message);
-            buffer = new byte[1000];
+            }
+            else
+            {
+                String message = new String(buffer);
+                sentMessages.add(message);
+                chatlog.add(new Chatlog(message, true));
+                System.out.println("sent: " + message);
+                buffer = new byte[1000];
+            }
         }
     }
 }
