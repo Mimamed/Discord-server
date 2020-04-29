@@ -54,11 +54,7 @@ public class ClientListener implements Runnable
         {
             if (input.read(buffer) == -1 || !new String(buffer).substring(0,8).equals("{6969420"))
             {
-                System.out.println("Disconnected");
-                read = false;
-                client.close();
-                MainClass.sombodyDisconected(username);
-                break;
+                disconnect();
             }
             else
             {
@@ -88,9 +84,21 @@ public class ClientListener implements Runnable
                     chatlog.add(new Chatlog(message, true));
                     System.out.println("sent: " + temp);
                 }
+                else if (message.charAt(8) == '¤')
+                {
+                    disconnect();
+                }
             }
             buffer = new byte[1000];
         }
+    }
+
+    public void disconnect() throws Exception
+    {
+        System.out.println("Disconnected");
+        read = false;
+        client.close();
+        MainClass.sombodyDisconected(username);
     }
 
     public void sendMessage(String message, char messageType)
