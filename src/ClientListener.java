@@ -6,31 +6,34 @@ import java.util.List;
 
 public class ClientListener implements Runnable
 {
-    static byte[] buffer = new byte[1000];
-    static Socket client;
-    static InputStream input;
-    static OutputStream output;
-    static List<Chatlog> chatlog = new ArrayList<Chatlog>();
-    static List<String> sentMessages = new ArrayList<String>(), receivedMessages = new ArrayList<String>();
-    static boolean read = false;
-    static int clientCount;
+    byte[] buffer = new byte[1000];
+    Socket client;
+    InputStream input;
+    OutputStream output;
+    List<Chatlog> chatlog = new ArrayList<Chatlog>();
+    List<String> sentMessages = new ArrayList<String>(), receivedMessages = new ArrayList<String>();
+    String username;
+    int clientCount;
+    boolean read = true;
+
 
     ClientListener(int clientCount)
     {
-        if (clientCount < 0 || clientCount > MainClass.serverSize)
-        {
-            this.clientCount = clientCount;
-        }
+        this.clientCount = clientCount;
     }
+
     public void run()
     {
         try
         {
+            System.out.println("tata");
             client = MainClass.server.accept();
 
-            System.out.println("Connectad!!! - " + client.isBound() + client.isConnected() + client.getInputStream().read());
-            MainClass.newClient();
+            System.out.println("Connectad!!! - ");
+            username = clientCount + ";";
             clientSetup();
+            MainClass.newClient(username);
+            read();
         }
         catch (Exception e)
         {
@@ -38,43 +41,72 @@ public class ClientListener implements Runnable
         }
     }
 
-    private static void clientSetup() throws Exception
+    private void clientSetup() throws Exception
     {
         input = client.getInputStream();
         output = client.getOutputStream();
-
-        buffer = ("{6969420-" + MainClass.users.size() + ":" + User.clientCount + ";6969420}").getBytes(); // fixar lite mer senare atag klienten nu vet hur många är online
-        output.write(buffer);
-        buffer = new byte[1000];
-        read();
     }
 
-    private static void read() throws Exception // Ska ändras så allt händer i Users klassen glöm inte fixa disconnect grejen
+    private void read() throws Exception // Ska ändras så allt händer i Users klassen glöm inte fixa disconnect grejen
     {
-        read = true;
 
         while (read)
         {
-            if (input.read(buffer) == -1)
+            if (input.read(buffer) == -1 || !new String(buffer).substring(0,8).equals("{6969420"))
             {
                 System.out.println("Disconnected");
                 read = false;
                 client.close();
-                MainClass.sombodyDisconected(clientCount);
+                MainClass.sombodyDisconected(username);
                 break;
-            }
-            else if (false) //är till för att stoppa in funktioner som clienten kan skicka
-            {
-
             }
             else
             {
                 String message = new String(buffer);
-                sentMessages.add(message);
-                chatlog.add(new Chatlog(message, true));
-                System.out.println("sent: " + message);
+                if (message.charAt(8) == '#')
+                {
+                    System.out.println(username);
+                    username = message.substring(9, message.indexOf(';'));
+                    System.out.println("namnet: " + username);
+                }
+                else if (message.charAt(8) == '?')
+                {
+                    String userList = "";
+                    for (int i = 0; i < MainClass.users.size() - 1; i++)
+                    {
+                        if (MainClass.users.get(i).username.indexOf(';') == -1)
+                        {
+                            userList+=MainClass.users.get(i).username + ":";
+                        }
+                    }
+                    sendMessage(userList, '?');
+                }
+                else if (message.charAt(8) == '+')
+                {
+                    String temp = message.substring(9, message.indexOf(';'));
+                    sentMessages.add(message);
+                    chatlog.add(new Chatlog(message, true));
+                    System.out.println("sent: " + temp);
+                }
+            }
+            buffer = new byte[1000];
+        }
+    }
+
+    public void sendMessage(String message, char messageType)
+    {
+        try
+        {
+            if (messageType == '?')
+            {
+                String temp = "{6969420?" + message + ";";
+                buffer =  temp.getBytes();
+                output.write(buffer);
                 buffer = new byte[1000];
             }
+        }catch (Exception e)
+        {
+            e.printStackTrace();
         }
     }
 }

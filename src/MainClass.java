@@ -8,9 +8,10 @@ public class MainClass
 
     static int port = 7777, serverSize = 100;
     static ServerSocket server;
-    static List<Socket> clients = new ArrayList<Socket>();
+    static List<User> accounts = new ArrayList<User>();
     static List<Thread> connections = new ArrayList<Thread>();
     static List<ClientListener> users = new ArrayList<ClientListener>();
+    static byte[] buffer = new byte[1000];
 
     public static void main(String[] args)
     {
@@ -28,13 +29,39 @@ public class MainClass
     private static void setupServer() throws Exception
     {
         server = new ServerSocket(port);
+
         users.add(new ClientListener(users.size()));
         connections.add(new Thread(users.get(0)));
         connections.get(0).start();
     }
 
-    public static void newClient()
+    public static void broadcast(String message, char messageType, String username)
     {
+        String temp = "{6969420?noob";
+        if (messageType == '?')
+        {
+
+        }
+
+        for (int i = 0; i < users.size() - 1; i++)
+        {
+            buffer = (message).getBytes(); // fixar lite mer senare atag klienten nu vet hur många är online
+            try
+            {
+                users.get(i).output.write(buffer);
+                System.out.println("teeeeeest");
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+            buffer = new byte[1000];
+        }
+    }
+
+    public static void newClient(String username)
+    {
+        //broadcast(Integer.toString(users.size() - 1),'?', username);//------------------- fixa
         if (users.size() < serverSize)
         {
             users.add(new ClientListener(users.size()));
@@ -43,29 +70,22 @@ public class MainClass
         }
     }
 
-    public static void sombodyDisconected(int clientCount)
+    public static void sombodyDisconected(String username)
     {
-        for(int i = 0; i < users.get(clientCount).chatlog.size(); i++)
+
+        System.out.println("förstöra: " + username);
+
+        for (int i = 0; i < users.size(); i++)
         {
-            System.out.println("-----: " + users.get(clientCount).chatlog.get(i).getMessage());
+            if (users.get(i).username.equals(username))
+            {
+                users.get(i).read = false;
+                users.remove(i);
+                connections.remove(i);
+            }
         }
 
-        users.get(clientCount).read = false;
-        try
-        {
-            users.get(clientCount).client.close();
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-        users.remove(clientCount);
-        connections.remove(clientCount);
-
-        for(int i = clientCount; i < users.size(); i++)
-        {
-            users.get(i).clientCount--;
-        }
+        //broadcast("{6969420-" + (users.size() - 1) + ":" + username + ";");
 
     }
 }

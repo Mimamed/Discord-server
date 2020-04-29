@@ -4,18 +4,17 @@ import java.util.List;
 
 public class User
 {
-    static String ipAddress;
     static List<String> receivedMessages = new ArrayList<String>();
     static List<String> sentMessages = new ArrayList<String>();
-    static int clientCount;
+    static String username;
 
-    User(int clientCount)
+    User(String username)
     {
-        this.clientCount = clientCount;
+        this.username = username;
         System.out.println("skapad");
     }
 
-    public static void receiveMessage(String message)
+    public static void receiveMessage(String message) // gör så att socketarna sänder det som saknas
     {
         receivedMessages.add(message);
         System.out.println("Sends - " + message);
